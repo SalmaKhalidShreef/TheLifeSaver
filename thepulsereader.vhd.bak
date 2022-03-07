@@ -1,0 +1,69 @@
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.std_logic_unsigned.all;
+   
+  use ieee.std_logic_arith.all;
+  
+  Entity thepulsereader  is 
+  port(
+  analog : in bit;
+  clk : in STD_LOGIC ;
+  pul_sense : OUT bit ;
+  abnormal,normal: out bit ;
+  BMPP : OUT STD_LOGIC_VECTOR(7 downto 0);
+  seg1,seg2,seg3: OUT STD_LOGIC_VECTOR(6 downto 0));
+  end thepulsereader;
+  
+  Architecture behaviour of thepulsereader is 
+  signal clock :STD_logic; 
+  signal pulse15 :STD_logic_vector (7 downto 0);
+  signal pulsefinal :STD_Logic_vector (7 downto 0);
+  signal pulse :bit ;
+  signal prescaler :STD_LOGIC_VECTOR (9 downto 0);
+  signal seconds :STD_LOGIC_VECTOR (3 downto 0);
+  
+	 
+  
+  begin
+   
+  process (clk)
+  begin
+    If clk' EVENT and clk = '1' then
+	 IF ( prescaler < 1111101000 ) then
+     prescaler <= prescaler+ 1;
+	 ELSE 
+	 prescaler <= "0000000000";
+	 seconds <= seconds + 1;
+	END if;
+	
+	IF seconds = "1111" then
+      seconds <= "0000";
+		clock <= '1';
+	END if;
+	pulse <=  analog;
+    if pulse ='1' then
+	 pulse15 <= pulse15+1;
+	 pul_sense <= '1';
+	 
+    end if ;
+   
+  if clock = '1' then ---after 15 seconds
+  pulsefinal <=  pulse15 (5 downto 0) & "00";
+  pulse15 <="00000000";
+  if (pulsefinal >= 01100100 or pulsefinal <= 00111100) then
+  abnormal <='1';
+   normal <='0'; 
+  else
+ normal <='1'; 
+  abnormal <='0';
+  end if ;
+  
+  BMPP <= pulsefinal;
+  
+  
+  
+  end if ;
+  end if;
+  end process;
+  end behaviour;
